@@ -1,10 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"os"
-	"strings"
 )
 
 func main() {
@@ -20,25 +19,20 @@ func main() {
 		buffer := make([]byte, 8)
 
 		n, err := file.Read(buffer)
-		if err == io.EOF {
+		if err != nil {
 			break
 		}
 
-		if err != nil {
-			fmt.Println("read error:", err)
-			return
-		}
+		data := buffer[:n]
 
-		stringedBuffer := string(buffer[:n])
-		parts := strings.Split(stringedBuffer, "\n")
-
-		for i := 0; i < len(parts)-1; i++ {
-			line := currentLine + parts[i]
+		if i := bytes.IndexByte(data, '\n'); i != -1 {
+			line := currentLine + string(data[:i])
 			fmt.Printf("read: %s\n", line)
 
 			currentLine = ""
+			data = data[i+1:]
 		}
 
-		currentLine += parts[len(parts)-1]
+		currentLine += string(data)
 	}
 }
