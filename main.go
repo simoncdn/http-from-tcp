@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -12,6 +13,8 @@ func main() {
 		fmt.Println("couln't open this file: messages.txt", err)
 	}
 	defer file.Close()
+
+	currentLine := ""
 
 	for {
 		buffer := make([]byte, 8)
@@ -27,6 +30,15 @@ func main() {
 		}
 
 		stringedBuffer := string(buffer[:n])
-		fmt.Printf("read: %s\n", stringedBuffer)
+		parts := strings.Split(stringedBuffer, "\n")
+
+		for i := 0; i < len(parts)-1; i++ {
+			line := currentLine + parts[i]
+			fmt.Printf("read: %s\n", line)
+
+			currentLine = ""
+		}
+
+		currentLine += parts[len(parts)-1]
 	}
 }
