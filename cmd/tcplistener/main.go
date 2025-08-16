@@ -11,6 +11,7 @@ import (
 
 const (
 	port = 42069
+	network = "tcp"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 		Port: port,
 	}
 
-	listener, err := net.ListenTCP("tcp", &tcpAddr)
+	listener, err := net.ListenTCP(network, &tcpAddr)
 	if err != nil {
 		log.Fatal("error listening tcp", err)
 	}
