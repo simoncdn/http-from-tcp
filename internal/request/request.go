@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -16,31 +17,46 @@ type RequestLine struct {
 	Method        string
 }
 
+const crlf = "\r\n"
+
 func RequestFromReader(reader io.Reader) (*Request, error) {
-	data, err := io.ReadAll(reader)
+	rawBytes, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
 
-	requestLine, err := parseRequestLine(data)
+	requestLine, err := parseRequestLine(rawBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	request := &Request{
-		*requestLine,
+		RequestLine: *requestLine,
 	}
 
 	return request, nil
 }
 
 func parseRequestLine(data []byte) (*RequestLine, error) {
-	dataString := string(data)
-	parts := strings.Split(dataString, "\r\n")
+	idx := bytes.Index(data, []byte(crlf))
+	if idx == -1 {
+		return nil, fmt.Errorf("could not find CRLF in request-line")
+	}
 
-	requestLineParts := strings.Split(parts[0], " ")
+	requestLineText := string(data[:idx])
+
+	requestLine, err := requestLineFromString(requestLineText)
+	if err != nil {
+		return nil, err
+	}
+
+	return requestLine, nil
+}
+
+func requestLineFromString(str string) (*RequestLine, error) {
+	requestLineParts := strings.Split(str, " ")
 	if len(requestLineParts) != 3 {
-		return nil, fmt.Errorf("poorly formatted request-line: %s", parts)
+		return nil, fmt.Errorf("poorly formatted request-line: %s", str)
 	}
 
 	method := requestLineParts[0]
