@@ -1,7 +1,7 @@
 package request
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -40,14 +40,34 @@ func parseRequestLine(data []byte) (*RequestLine, error) {
 
 	requestLineParts := strings.Split(parts[0], " ")
 	if len(requestLineParts) != 3 {
-		return nil, errors.New("invalid request line")
+		return nil, fmt.Errorf("poorly formatted request-line: %s", parts)
 	}
-	httpVersion := strings.Split(requestLineParts[2], "/")[1]
+
+	method := requestLineParts[0]
+	for _, c := range method {
+		if c < 'A' || c > 'Z' {
+			return nil, fmt.Errorf("invalid method: %s", method)
+		}
+	}
+
+	requestTarget := requestLineParts[1]
+
+	versionParts := strings.Split(requestLineParts[2], "/")
+
+	httpPart := versionParts[0]
+	if httpPart != "HTTP" {
+		return nil, fmt.Errorf("unrecognized HTTP-version: %s", httpPart)
+	}
+
+	version := versionParts[1]
+	if version != "1.1" {
+		return nil, fmt.Errorf("unrecognized HTTP-version: %s", version)
+	}
 
 	requestLine := RequestLine{
-		HttpVersion:   httpVersion,
-		RequestTarget: requestLineParts[1],
-		Method:        requestLineParts[0],
+		HttpVersion:   version,
+		RequestTarget: requestTarget,
+		Method:        method,
 	}
 
 	return &requestLine, nil
